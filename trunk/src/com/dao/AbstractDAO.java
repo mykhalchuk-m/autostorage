@@ -8,7 +8,7 @@ import org.hibernate.Transaction;
 import com.utils.HibernateUtil;
 
 public abstract class AbstractDAO<T> {
-	private Logger logger = Logger.getLogger(AbstractDAO.class);
+	protected Logger logger = Logger.getLogger(AbstractDAO.class);
 	protected Session session;
 	protected Transaction transaction;
 

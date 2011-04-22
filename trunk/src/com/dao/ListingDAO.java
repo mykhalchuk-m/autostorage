@@ -2,12 +2,13 @@ package com.dao;
 
 import java.util.List;
 
-import org.hibernate.Criteria;
-import org.hibernate.criterion.Restrictions;
+import org.hibernate.Query;
 
 import com.beans.Listing;
+import com.beans.Owner;
 
 public class ListingDAO extends AbstractDAO<Listing> {
+	private static String EQUAL_LISTING_QUERY = "select l.id from owner as o inner join listing as l on l.owner_fc=o.id where l.marka=:marka and l.model=:model and l.year=:year";
 
 	public ListingDAO() {
 		super();
@@ -16,11 +17,6 @@ public class ListingDAO extends AbstractDAO<Listing> {
 	@Override
 	public void save(Listing listing) {
 		listing.setAdditionalInfo(removeWhiteSpace(listing.getAdditionalInfo()));
-		// OwnerDAO ownerDAO = new OwnerDAO();
-		// Owner dbOwner = ownerDAO.getOwnerByParams(listing.getOwner()
-		// .getPerson(), listing.getOwner().getCountry(), listing
-		// .getOwner().getCity(), listing.getOwner().getPhone(), listing
-		// .getOwner().getEmail());
 		if (!isEqualsInDB(listing)) {
 			super.save(listing);
 		}
@@ -47,29 +43,34 @@ public class ListingDAO extends AbstractDAO<Listing> {
 
 	private boolean isEqualsInDB(Listing listing) {
 		super.startOperation();
-		Criteria criteria = session.createCriteria(Listing.class);
-		if (listing.getMarka() != null) {
-			criteria.add(Restrictions.eq("marka", listing.getMarka()));
+		boolean exist = false;
+		Query query = session.createSQLQuery(buildQuery(listing.getOwner()));
+		query.setString("marka", listing.getMarka());
+		query.setString("model", listing.getModel());
+		query.setString("year", listing.getBasicInformation().getYear());
+		List<?> list = query.list();
+		if (list.size() > 0) {
+			exist = true;
+		} else {
+			exist = false;
 		}
-		if (listing.getModel() != null) {
-			criteria.add(Restrictions.eq("model", listing.getModel()));
+		logger.info("Existing item " + listing.getMarka() + " " + listing.getModel() + " in data base: " + exist);
+		return exist;
+	}
+	
+	private String buildQuery(Owner owner) {
+		StringBuilder builder = new StringBuilder();
+		builder.append(EQUAL_LISTING_QUERY);
+		if (owner.getCity() == "") {
+			builder.append(" and o.city=" + owner.getCity());
 		}
-		if (listing.getBasicInformation().getYear() != null) {
-			criteria.add(Restrictions.eq("year", listing.getBasicInformation()
-					.getYear()));
+		if (owner.getCity() == "") {
+			builder.append(" and o.person=" + owner.getPerson());
 		}
-		if (listing.getOwner().getCity() != null) {
-			criteria.add(Restrictions.eq("city", listing.getOwner().getCity()));
+		if (owner.getCity() == "") {
+			builder.append(" and o.email=l" + owner.getEmail());
 		}
-		if (listing.getOwner().getEmail() != null) {
-			criteria.add(Restrictions
-					.eq("email", listing.getOwner().getEmail()));
-		}
-		@SuppressWarnings("unchecked")
-		List<Listing> existList = criteria.list();
-		if (existList.size() > 0) {
-			return true;
-		}
-		return false;
+		return builder.toString();
+
 	}
 }
