@@ -10,7 +10,8 @@ public class Application {
 		BasicConfigurator.configure();
 		logger.info("Application started");
 		MultiplayRunner runner = new MultiplayRunner();
-		runner.runMultiplayStorrage("data");
+		String path = args[0];
+		runner.runMultiplayStorrage(path);
 		logger.info("Application stopped");
 	}
 }
