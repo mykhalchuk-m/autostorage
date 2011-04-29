@@ -18,6 +18,18 @@ public class ListingDAO extends AbstractDAO<Listing> {
 	public void save(Listing listing) {
 		listing.setAdditionalInfo(removeWhiteSpace(listing.getAdditionalInfo()));
 		if (!isEqualsInDB(listing)) {
+			OwnerDAO ownerDAO = new OwnerDAO();
+			Owner dbOwner = listing.getOwner();
+			Owner owner = ownerDAO.getOwnerByParams(session, dbOwner.getPerson(),
+					dbOwner.getCountry(), dbOwner.getCity(),
+					dbOwner.getPhone(), dbOwner.getEmail());
+			if (owner != null) {
+				List<Listing> listings = owner.getListings();
+				listings.add(listing);
+				owner.setListings(listings);
+				ownerDAO.update(owner);
+				listing.getOwner().setId(owner.getId());
+			}
 			super.save(listing);
 		}
 	}
@@ -54,10 +66,11 @@ public class ListingDAO extends AbstractDAO<Listing> {
 		} else {
 			exist = false;
 		}
-		logger.info("Existing item " + listing.getMarka() + " " + listing.getModel() + " in data base: " + exist);
+		logger.info("Existing item " + listing.getMarka() + " "
+				+ listing.getModel() + " in data base: " + exist);
 		return exist;
 	}
-	
+
 	private String buildQuery(Owner owner) {
 		StringBuilder builder = new StringBuilder();
 		builder.append(EQUAL_LISTING_QUERY);
@@ -71,6 +84,5 @@ public class ListingDAO extends AbstractDAO<Listing> {
 			builder.append(" and o.email=l" + owner.getEmail());
 		}
 		return builder.toString();
-
 	}
 }
