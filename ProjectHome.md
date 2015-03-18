@@ -1,0 +1,1 @@
+Storing xml-file based data int mysql database using Hibernate, xml files parsing with jaxb.
